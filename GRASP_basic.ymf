@@ -1,0 +1,6 @@
+[YarraModule]
+Name=Basic GRASP (Matlab)
+Description=Baisc GRASP reconstruction without motion correction
+Version=0.1a
+Author=Li Feng and Kai Tobias Block
+RequiresMatlab=true
