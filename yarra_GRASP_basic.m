@@ -1,6 +1,6 @@
 function [data] = yarra_GRASP_basic(work_path, meas_file, output_path, ~, mode_file)
 
-    version='0.1a';
+    version='0.1b';
 
     fprintf('\n');
     fprintf('Yarra Basic GRASP Recon %s\n',version);
@@ -85,8 +85,6 @@ function [data] = yarra_GRASP_basic(work_path, meas_file, output_path, ~, mode_f
     partitions   =twixfile.image.NPar;
     imagesPerSlab=twixfile.hdr.Meas.lImagesPerSlab;
     TA           =twixfile.hdr.Meas.lTotalScanTimeSec;
-       
-    disp('Sorting data...');
     
     % Get the kspace data and convert to double now to avoid repetitive
     % recasting into at later points
@@ -95,20 +93,33 @@ function [data] = yarra_GRASP_basic(work_path, meas_file, output_path, ~, mode_f
     % Free up the data again
     clear twixfile;    
 
-    kdata=permute(kdata,[1 3 4 2]);
-    kdata=zerofill_Kz(kdata,3,partitions,imagesPerSlab,centerpar,recoparams.apply_kx_filter);
-    [nx,ntviews,nz,nc]=size(kdata);
+    disp('Sorting data...');
+	
+    kdata = permute(kdata,[1 3 4 2]);
 
-    disp('Finished reading data');          
-   
+	% If reduced slice resolution has been used, zero-pad the partitions to match 
+	% the number of slices
+    if partitions <= imagesPerSlab
+        kdata = zerofill_Kz(kdata,3,partitions,imagesPerSlab,centerpar,recoparams.apply_kx_filter);
+    end
+    [nx,ntviews,nz,nc]=size(kdata); 
     [Traj,DensityComp]=Trajectory_GoldenAngle(ntviews,nx);
 
     % FFT along the kz dimension
-    kdata1=fftshift(ifft(fftshift(kdata,3),[],3),3); 
+    kdata1=fftshift(ifft(fftshift(kdata,3),[],3),3);
+    
+    % Check if slice oversampling has been used, i.e. more partitions than slices
+    if partitions > imagesPerSlab
+        % Remove front and back slices to match imagesPerSlab
+        kdata1 = kdata1(:,:,centerpar-imagesPerSlab/2:centerpar+imagesPerSlab/2-1,:,:);
+        % Update variable holding size of data matrix
+        nz = imagesPerSlab;
+    end
    
     nline=recoparams.spokes_per_frame;  % Number of spokes per frame
     nt=floor(ntviews/nline);            % Number of frames   
     
+    disp('Finished reading data');          
     disp(' ');
     disp('== Information ================================');
     fprintf('Number of slices = %d\n',   imagesPerSlab);
