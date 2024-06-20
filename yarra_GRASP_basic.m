@@ -56,11 +56,8 @@ function [data] = yarra_GRASP_basic(work_path, meas_file, output_path, ~, mode_f
         recoparams.sliceFrom=settings.slicefrom;
     end    
     if (isfield(settings,'sliceto'))
-        recoparams.sliceFrom=settings.sliceto;
+        recoparams.sliceTo=settings.sliceto;
     end
-    if (isfield(settings,'sliceto'))
-        recoparams.sliceFrom=settings.sliceto;
-    end    
     if (isfield(settings,'maxthreads'))
         recoparams.cores_to_use=settings.maxthreads;
     end        
